@@ -1,0 +1,585 @@
+---
+title: "Product Analysis"
+author: "Melvin"
+date: "2023-02-06"
+output: html_document
+---
+
+### Introduction about the company
+
+Bellabeat is a high-tech company that produces health-focused smart products specifically designed for women. It was founded in 2013 by Urška Sršen and Sando Mur and draws on Sršen's background as an artist to create pleasing products that collect information about a woman's activity, sleep, stress levels, and reproductive health. By providing women with access to this data, Bellabeat aims to empower and educate them about their own health and wellness.
+
+### Products
+
+* *Bellabeat app:* The Bellabeat app provides users with health data related to their activity, sleep, stress,
+menstrual cycle, and mindfulness habits. This data can help users better understand their current habits and make healthy decisions. The Bellabeat app connects to their line of smart wellness products.
+
+* *Leaf:* Bellabeat’s classic wellness tracker can be worn as a bracelet, necklace, or clip. The Leaf tracker connects to the Bellabeat app to track activity, sleep, and stress.
+
+* *Time:* This wellness watch combines the timeless look of a classic timepiece with smart technology to track user
+activity, sleep, and stress. The Time watch connects to the Bellabeat app to provide you with insights into your daily wellness.
+
+* *Spring:* This is a water bottle that tracks daily water intake using smart technology to ensure that you are
+appropriately hydrated throughout the day. The Spring bottle connects to the Bellabeat app to track your hydration levels.
+
+* *Bellabeat membership:* Bellabeat also offers a subscription-based membership program for users. Membership gives users 24/7 access to fully personalized guidance on nutrition, activity, sleep, health and beauty, and mindfulness based on their lifestyle and goals.
+
+# _______________________________________________
+
+#### The business task:
+1. What are some trends in smart device usage?
+2. How could these trends apply to Bellabeat customers?
+3. How could these trends help influence Bellabeat marketing strategy?
+
+#### The key stakeholders:
+1. *Urška Sršen:* Co founder and Chief Creative Officer of Bellabeat.
+2. *Sando Mur:* Mathematician and Bellabeat’s cofounder
+3. *Bellabeat marketing analytics team:* A team of data analysts responsible for collecting, analyzing, and reporting data that helps guide Bellabeat’s marketing strategy.
+
+# _______________________________________________
+
+#### 1. Data Source and Data Exploration
+
+#### 1.1  Data Source
+The folder which contains the data set to be used was downloaded/taken from the Kaggle FitBit Fitness Tracker Data (CC0: Public Domain, data set made available through Mobius). In this folder, 18 csv files containing personal fitness tracker from 30 fitbit users were provided.
+
+#### 1.2 Data Exploration
+Steps taken after downloading the datasets:
+
+1.2.1 Storing the csv files into R directory and loading the tidyverse library and ggpubr.
+
+```{r}
+library(tidyverse)
+library(ggpubr)
+```
+
+1.2.2 Checking the structure of the datasets to be used from csv file and this time we will to used the dailyActivity, heartrate_seconds, minuteMETSNarrow,sleepDay and weightLogInfo datasets for the analysis.
+
+#### Daily Activity
+```{r message=FALSE}
+DlyAct <- read_csv("~/Course7/Fitabase Data 4.12.16-5.12.16/dailyActivity_merged.csv")
+str(DlyAct)
+```
+#### Heart rate per seconds
+```{r message=FALSE}
+HeartRateSec <-
+  read_csv("~/Course7/Fitabase Data 4.12.16-5.12.16/heartrate_seconds_merged.csv")
+str(HeartRateSec)
+```
+
+#### Minute METS (Metabolic Equivalent of Task)
+```{r message=FALSE}
+MinMet <-
+  read_csv("~/Course7/Fitabase Data 4.12.16-5.12.16/minuteMETsNarrow_merged.csv")
+str(MinMet)
+```
+
+#### Sleep day
+```{r message=FALSE}
+SlpDay <-
+  read_csv("~/Course7/Fitabase Data 4.12.16-5.12.16/sleepDay_merged.csv")
+str(SlpDay)
+```
+
+#### Weight log info
+```{r message=FALSE}
+WLogIfo <-
+  read_csv("~/Course7/Fitabase Data 4.12.16-5.12.16/weightLogInfo_merged.csv")
+str(WLogIfo)
+```
+
+1.2.3 Checking the number of unique Id's which will represent number of person with data.
+```{r message=FALSE}
+tbl_pax <-
+  data.frame(
+    tbl_paxnum = c(
+      length(unique(DlyAct$Id)),
+      length(unique(HeartRateSec$Id)),
+      length(unique(MinMet$Id)),
+      length(unique(SlpDay$Id)),
+      length(unique(WLogIfo$Id))
+    ),
+    tbl_name = c(
+      'Daily Activity',
+      'Heartrate per sec',
+      'METS',
+      'Sleep day',
+      'Weight Log Info'
+    )
+  )
+tbl_pax
+```
+
+* After examining the unique IDs of the 5 tables, only the "Daily Activity" and "METS" tables have the same number of entries, which is 33. 
+
+* When it comes to the other tables, having a sample size smaller than 33 may have a significant impact on the validity of the findings.
+
+* Even though there is a significant difference in the number of samples between the tables, we will still attempt to gain some insights.
+
+# _______________________________________________
+
+#### 2. Data Processing
+
+#### 2.1 Changing the Date format
+
+As shown above, the data type for the date column is not in the correct format. Therefore, it is necessary to change this and we need to import the lubridate function.
+
+```{r}
+library(lubridate)
+DlyAct$ActivityDate <- mdy(DlyAct$ActivityDate)
+HeartRateSec$Time <- mdy_hms(HeartRateSec$Time)
+MinMet$ActivityMinute <- mdy_hms(MinMet$ActivityMinute)
+SlpDay$SleepDay <- mdy_hms(SlpDay$SleepDay)
+WLogIfo$Date <- mdy_hms(WLogIfo$Date)
+```
+
+#### 2.2 Finding NA, NULL values and duplicated rows.
+
+```{r}
+cat(sum(is.na(DlyAct)), 'NA Values \n')
+cat(sum(is.null(DlyAct)), 'NULL Values\n')
+cat(sum(duplicated(DlyAct)), 'Total num of duplicated row')
+```
+
+```{r}
+cat(sum(is.na(HeartRateSec)), 'NA Values \n')
+cat(sum(is.null(HeartRateSec)), 'NULL Values \n')
+cat(sum(duplicated(HeartRateSec)), 'Total num of duplicated row')
+```
+
+```{r}
+cat(sum(is.na(MinMet)), 'NA Values \n')
+cat(sum(is.null(MinMet)), 'NULL Values\n')
+cat(sum(duplicated(HeartRateSec)), 'Total num of duplicated row')
+```
+
+```{r}
+cat(sum(is.na(SlpDay)), 'NA Values \n')
+cat(sum(is.null(SlpDay)), 'NULL Values \n')
+cat(sum(duplicated(SlpDay)), 'Total num of duplicated row')
+```
+
+```{r}
+cat(sum(is.na(WLogIfo)), 'NA Values \n')
+sapply(WLogIfo, function(x) sum(is.na(x))) # to check what column has the NA values
+cat(sum(is.null(WLogIfo)), 'NULL Values \n')
+cat(sum(duplicated(WLogIfo)), 'Total num of duplicated row \n')
+```
+
+* 4 out of 5 tables have no missing (NA) or NULL values. Hence, we will concentrate on the "Fat" column in the "Weight Log Info" table, as this is the column with 65 missing values.
+
+* 4 out of 5 tables have no duplicated rows. Hence, we will remove the duplication in the "Sleep day" table.
+
+##### 2.3 Removing the duplicated row and column with NA values.
+
+Removing the duplicated row in "Sleep day" table
+```{r}
+SlpDay <-
+  SlpDay %>% distinct() # using distinct to filter out the duplication
+cat(sum(duplicated(SlpDay)), 'Total num of duplicated row \n\n')
+str(SlpDay)
+```
+
+* After removing the duplicate rows from the data frame, the size of the table has changed from 413 rows by 5 columns (413 x 5) to 410 rows by 5 columns (410 x 5).
+
+Inspecting and removing the Fat column in "Weight Log Info" table
+```{r}
+count_na <- is.na(WLogIfo$Fat)
+true_count <- sum(count_na)
+false_count <- length(WLogIfo$Fat) - true_count
+cat(true_count, 'NA values and only', false_count, 'with value \n\n')
+
+WLogIfo1 <- select(WLogIfo,-Fat)
+str(WLogIfo1)
+```
+* After inspecting the "Fat" column, we discovered that only two values are valid. As a result, we chose to remove the column from the data frame, reducing the size from 67 rows by 8 columns (67 x 8) to 67 rows by 7 columns (67 x 7) after removing the "Fat" column.
+
+# _______________________________________________
+
+#### 3. Analyzing the Data
+
+3.1 We start by grouping the average steps, distance and calories by converting the date into days (Monday - Sunday)
+```{r}
+# Summarizing the daily activity table
+Actday <- DlyAct %>%
+  group_by(Day = wday(DlyAct$ActivityDate, label = TRUE)) %>%
+  summarise(
+    Avg_Steps = sum(TotalSteps) / n(),
+    Avg_Distance = sum(TotalDistance) / n(),
+    Avg_Cal = sum(Calories) / n()
+  )
+Actday
+```
+
+* The table indicates that, on average, people tend to run or walk the most on Saturdays and Tuesdays.
+
+3.2 checking for the duration (days) that the data extracted from wearing the device
+```{r}
+
+get_daysAct <- strftime(DlyAct$ActivityDate, format = "%Y-%m-%d")
+cat("for", length(unique(get_daysAct)), "days daily activity data extracted \n")
+
+get_daysHeart <- strftime(HeartRateSec$Time, format = "%Y-%m-%d")
+cat("for", length(unique(get_daysHeart)), "days heart rate data extracted \n")
+
+get_daysMET <- strftime(MinMet$ActivityMinute, format = "%Y-%m-%d")
+cat("for", length(unique(get_daysMET)), "days MET data extracted \n")
+
+get_daysSlp <- strftime(SlpDay$SleepDay, format = "%Y-%m-%d")
+cat("for", length(unique(get_daysSlp)), "days Sleep data extracted \n")
+
+get_daysWLog <- strftime(WLogIfo1$Date, format = "%Y-%m-%d")
+cat("for", length(unique(get_daysWLog)), "days Weight Log data extracted \n")
+```
+
+* Out of 5 tables, 3 have data collected for the same number of days.
+
+* This is just the maximum number of days the data was collected, not true to all person as others have less days.
+
+3.3 Checking the average hours of sleeping and average hours in bed in a day of the people wearing the device.
+```{r}
+# Summarizing the Sleep day table
+AvgSleep <- SlpDay %>%
+  group_by(Day = wday(SlpDay$SleepDay, label = TRUE)) %>%
+  summarise(Avg_time_asleep = (sum(TotalMinutesAsleep) / n()) / 60,
+            Avg_time_inbed = (sum(TotalTimeInBed) / n()) / 60)
+
+AvgSleep
+
+```
+
+* As seen, most days people sleep less than the recommended 7-9 hours by the National Sleep Foundation.
+
+3.4 We will take a look at Minute METs table and extract how many minutes people spends on activity
+```{r}
+
+# I've got a problem converting the time to numeric so I came up with this solution.
+# Every minute the User Ids will log into the database
+# so we can assume that every 1 User Id log = 1 min
+#
+#ex: Person 1 (Id 123)
+#        Id  Time
+#        123 min 0
+#        123 min 1
+#        123 min 2
+# every person who uses the product will have that type of log everyday starting from 0. We also need to do some filtering for User Id log with 0 minute
+
+Met_per_day <- MinMet %>%
+  filter(strftime(ActivityMinute, format = "%H:%M:%S") != "00:00:00") %>%
+  group_by(Day = wday(ActivityMinute, label = TRUE)) %>%
+  summarise(
+    NumUserIdLog = length(unique(Id)),
+    TotaActTime = n(),
+    AvgMETs = sum(METs) / n()
+  )
+
+Met_per_day
+
+```
+
+* Saturdays got the highest average of METs (Metabolic Equivalent for Task), despite of having less total activity time compared to Tue, Wed, Thursday and Friday.
+
+3.5 Checking the total sleep hours of people who have a normal BMI of 18.5 - 25 for Women.
+```{r}
+#Summarizing and filtering the weight log info
+checkBMI <- WLogIfo1 %>%
+  filter(BMI > 18.5 & BMI < 25) %>%
+  group_by(Id) %>%
+  summarise(meanBMI = mean(BMI))
+
+#Summarizing the Sleep day table
+checkSleep <- SlpDay %>%
+  group_by(Id) %>%
+  summarise(TotalSleep = (sum(TotalMinutesAsleep) / n()) / 60)
+
+# joining Weight Log info table with sleep day table
+BMISleep <- left_join(checkBMI, checkSleep, by = "Id")
+
+BMISleep
+
+```
+
+* only 3 out of 8 person with data, pass the range for a healthy BMI but unfortunately, 1 out of 3 person doesn't have a data for total sleep per day.
+
+* These two people, who belong to the range of healthy BMI, also have almost the desired average hours of sleep per day (refer 3.3)
+
+# _______________________________________________
+
+#### 4. Sharing the Data
+
+4.1 Correlation between Total steps and Calorie
+```{r}
+#Plotting
+CalStep <- DlyAct %>%
+  ggplot(mapping = aes(x = TotalSteps, y = Calories)) +
+  geom_point(color = "#b68fef") +
+  geom_smooth(method = lm, color = "blue") +
+  geom_hline(yintercept = mean(DlyAct$Calories),linetype = 5,color = "darkgreen") +
+  stat_cor(method = "pearson",label.x = 20000,label.y = 1000,color = "blue") +
+  labs(title = "Total steps vs Calories", x = "Total steps") + 
+  annotate('text',x = 27000,y = 2500 ,label = paste("Mean", round(mean(DlyAct$Calories))),color = "darkgreen", size= 3) +
+  theme_light()
+
+CalStep
+
+```
+
+* There is a moderate correlation between the total number of steps taken and the amount of calories burned. This suggests that as the total number of steps increases, there is also a higher probability that the number of calories burned will rise.
+
+4.2 Average steps on days with calories burned
+```{r}
+#Plotting
+Actday %>%
+  ggplot(mapping = aes(x = Day, y = Avg_Steps, color = Avg_Cal)) +
+  geom_segment(aes(x = Day, xend = Day, y = 6000, yend = Avg_Steps)) +
+  geom_point(size = 8) +
+  scale_color_gradient(low = "red", high = "blue") +
+  theme_light() +
+  labs(title = "Average steps on Days vs Calories", y = "Average steps")
+```
+
+ * Visualization from the table 3.1 (Analyzing Data).
+ 
+ * Thursday got the lowest calories burn, despite of getting a higher average of steps than Sunday.
+
+4.3 App Usage
+```{r}
+#Summarizing Daily Activity table
+Prod_Use <- DlyAct %>%
+  group_by(Id) %>%
+  summarise(Sum_Usage = (sum((VeryActiveMinutes + FairlyActiveMinutes + LightlyActiveMinutes + SedentaryMinutes) / 60)) / length(Id))
+
+#getting the mean to be use as divider for fill
+mean_usage <- mean(Prod_Use$Sum_Usage)
+
+# we will add new column in Prod_Use DF.
+Prod_Use <- Prod_Use %>%
+  mutate(Hours = ifelse(Sum_Usage > mean_usage, "Above 20 hrs", "Below 20 hrs"))
+
+#Plotting
+ggplot(Prod_Use, aes(x = Sum_Usage, fill = Hours)) +
+  geom_histogram(bins = 32, color = "black") +
+  geom_vline(aes(xintercept = mean(Sum_Usage)), linetype = 5, color = "darkgreen") +
+  labs(title = "App Usage", x = "Number of hours", y = "Number of person") +
+  scale_fill_manual(values = c("Below 20 hrs" = "#ff8080", "Above 20 hrs" = "#809fff")) +
+  theme_light() +
+  annotate('text', x = 22.5, y = 6, label = "18 person", size= 3) +
+  annotate('text', x = 17.5, y = 6, label = "15 person", size= 3) +
+  annotate('text', x = 20.5, y = 4, label = paste("Mean", round(mean(Prod_Use$Sum_Usage), 2)), color = "darkgreen", size= 3, angle=90)
+```
+
+* Out of 33 person, 18 of them wears the device more than the average hours
+
+
+4.4A Accuracy of the app in tracking data.
+```{r}
+# Create the summarized data frame and validate if total active + sedentary minutes is equal to 1,440 minutes (24 hours). 
+ActDly_summary <- DlyAct %>%
+  summarise(
+    Id,
+    ActivityDate,
+    TMinsAct = VeryActiveMinutes + FairlyActiveMinutes + LightlyActiveMinutes + SedentaryMinutes) %>%
+    mutate(Test = case_when(TMinsAct >= 1440 ~ "Questionable",
+                          TMinsAct <= 1439 ~ "Valid"))
+
+# Group the data by valid status and calculate the total time spent in each category
+grouped_data <- ActDly_summary %>%
+  group_by(Test) %>%
+  summarise(total_time = sum(TMinsAct), count = n()) %>%
+  mutate(prop = 100 * count / sum(count))
+
+# pie chart
+ggplot(grouped_data, aes(x = "", y = total_time, fill = Test)) +
+  geom_bar(width = 1, stat = "identity", color= "black") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  geom_text(aes(label = paste(round(prop, 2), "%")), position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = paste(prop / 100 * 940)), position = position_stack(vjust = 0.4)) + # the 940 comes from the total number of row with data in DlyAct table.
+  scale_fill_manual(values = c(
+    "Valid" = "#9fff80",
+    "Questionable" = "#ff8080"
+  )) +
+  labs(title = "Active plus Sedentary Minutes", caption = "Total count of days with total mins active + sedentary equal to 1,440 \n(24 hrs) tagged as 'Questionable' vs less than 1,440 tagged as 'valid'")
+
+```
+
+* Based on the graph above, 50.85% of the total active minutes + sedentary data was equivalent to 1,440 mins (24 hours).
+
+* I also merged the daily active table with the Sleep day table by matching the dates and Id and I found out that all of the merged records with 1,440 mins (activity + sedentary) do not have the total minutes of sleep recorded and are marked as NA. (refer to 4.4B).
+
+4.4B continuation.. (Accuracy of the app in tracking data)
+```{r}
+# we are joining the two tables (Daily activity with Sleep day)
+DlySleep <-
+  left_join(DlyAct, SlpDay, by = c("Id", "ActivityDate" = "SleepDay"))
+
+# we need to select only the columns to be used and summarized the active and sedentary minutes.
+DlySlp_sum <- DlySleep %>%
+  select(
+    Id,
+    ActivityDate,
+    VeryActiveMinutes,
+    FairlyActiveMinutes,
+    LightlyActiveMinutes,
+    SedentaryMinutes,
+    TotalMinutesAsleep) %>%
+  mutate(Tmin = VeryActiveMinutes + FairlyActiveMinutes + LightlyActiveMinutes + SedentaryMinutes)
+
+# filtering
+DlySlp_slct <- DlySlp_sum %>%
+  mutate(Evaluation = case_when(is.na(TotalMinutesAsleep) == TRUE ~ "NA")) %>%
+  filter(Tmin == 1440 & Evaluation == "NA") %>%
+  select(Id, ActivityDate, Tmin, TotalMinutesAsleep)
+
+DlySlp_slct
+```
+
+* All of the Total minutes (Tmin) equal to 1,440 (Active + sedentary) from Daily Activity table has "NA" on their Total Minutes Asleep table.
+
+* Thus this means that the app recorded them as awake the whole time? (1,440 mins / 60 min per hour) = 24 hours
+
+* This will raise a question of data accuracy gathered by the app.
+
+4.5 Average Heart rate.
+```{r}
+# summarizing the table
+RDate <- HeartRateSec %>%
+  group_by(Day = strftime(Time, format = "%m-%d")) %>%
+  summarise(Avg_val = sum(Value) / n())
+
+# Plotting the table
+RDate %>%
+  ggplot(mapping = aes(x = Avg_val)) +
+  geom_histogram(bins = 33, fill = "#ffbf00",color = "#0040ff") +
+  geom_segment(aes(x = 60, xend = 100, y = 0, yend = 0)) +
+  geom_vline(aes(xintercept = mean(Avg_val)), linetype = 5, color = "darkgreen") +
+  theme_light()+
+  labs(title = "Healthy status", x = "Heart rate", y = "Number of people") +
+  annotate('text',x = 74,y = 7.5,label = paste("Mean", round(mean(RDate$Avg_val), 2)),color = "darkgreen", size= 3)
+```
+
+* The heart rate of 14 people with data, falls within the normal range of 60 to 100 beats per second.
+
+4.6 Calories vs METs
+```{r}
+# Summarizing METs table as we should join this table into Daily Activity table.
+Mets_summary <- MinMet %>%
+  group_by(Id, Day = as.Date(strftime(ActivityMinute, format = "%Y-%m-%d"))) %>%
+  summarise(Avgmets = sum(METs) / n())
+
+# Joining the two tables
+MergeActMets <-
+  left_join(DlyAct, Mets_summary, by = c("Id", "ActivityDate" = "Day")) %>%
+  select(Id, ActivityDate, Calories, Avgmets)
+
+#Plotting
+MergeActMets %>%
+  ggplot(mapping = aes(x = Avgmets, y = Calories)) +
+  geom_point(color = "#b68fef") +
+  geom_smooth(method = lm, color = "blue") +
+  geom_hline(yintercept = mean(MergeActMets$Calories),linetype = 5, color = "darkgreen") +
+  stat_cor(method = "pearson",label.x = 22.5,label.y = 500, color = "blue") +
+  theme_light() +
+  labs(title = "Correlation between Calories and METs", x = "Metabolic Equivalent of Task (MET)") +
+  annotate('text',x = 25,y = 2450,label = paste("Mean", round(mean(MergeActMets$Calories))),color = "darkgreen", size= 3)
+```
+
+* There is a moderate correlation between the Metabolic Equivalent of Task (MET) and the amount of calories burned. This suggests that as the METs increases, there is also a higher probability that the number of calories burned will increase.
+
+4.7 Amount of sleep
+```{r}
+# Summarizing the table
+Slp_summary <- SlpDay %>% 
+              summarise(Id, SleepDay, Thours = TotalMinutesAsleep / 60)
+
+# Adding a new column for evaluation
+SlpTest <- Slp_summary %>% 
+  mutate(Sleep=  case_when(Thours < 7 ~ "Lower than recommended",
+                             Thours >=7 & Thours <=9 ~ "Recommended",
+                             Thours >9 ~ "Higher than recommended"))
+
+# Count for annotation
+Ctrl <- SlpTest %>% 
+        filter(Sleep == 'Lower than recommended') %>%
+        summarise(coL = n())
+Ctrr <- SlpTest %>% 
+       filter(Sleep == 'Recommended') %>% 
+        summarise(coL = n())
+Ctrh <- SlpTest %>% 
+       filter(Sleep == 'Higher than recommended') %>% 
+        summarise(coL = n())
+      
+#Plotting
+SlpTest %>% 
+  ggplot(mapping = aes(x= Thours, fill=Sleep))+
+  geom_histogram(bins = 50, color= "black")+
+  scale_fill_manual(name= "Sleep", values = c("Lower than recommended" = "#8084ff","Recommended" = "#2ddf20", "Higher than recommended" = "#ff8080" ))+
+  theme_light() +
+  labs(title = "Sleep records distribution", y = "Number of people", x= "Hours", caption = "Recommended hours of sleep is between 7 - 9 hours by National Sleep Foundation") +
+  annotate('text', x =2, y= 21, label = paste(round((Ctrl / count(SlpTest))*100, 2), "%"), color= "#8084ff", size= 3) +
+  annotate('text', x =8.5, y= 30.5, label = paste(round((Ctrr / count(SlpTest))*100, 2), "%"), color= "#2ddf20", size= 3) +
+  annotate('text', x =11, y= 21, label = paste(round((Ctrh / count(SlpTest))*100, 2), "%"), color= "#ff8080", size= 3)
+```
+
+* 44.15% of the sleep days was lower than the recommended hours and this my affect the overall health status of a person.
+
+4.8 Body Mass Index (BMI)
+```{r}
+# Summarizing and getting the average.
+WLog_summary <- WLogIfo1 %>% 
+                group_by(Id) %>% 
+                summarise(AvgWght= sum(WeightKg) / n(), AvgBmi = sum(BMI)/ n())
+
+# adding new column for evaluation
+WLog_summary <- WLog_summary %>% 
+                mutate(EvalBmi = case_when( AvgBmi >=18.5 & AvgBmi <=25 ~ "Normal",
+                                            AvgBmi > 25 ~ "Above Normal"))
+
+#Plotting
+WLog_summary %>% 
+  ggplot(mapping = aes(x= AvgBmi, fill= EvalBmi)) +
+  geom_histogram(bins = 8, color="black") +
+  scale_fill_manual(name= "Evaluation", values = c("Normal"= "#2ddf20", "Above Normal"= "#ff8080")) +
+  geom_vline(aes(xintercept = 18.5), linetype = 5, color = "darkgreen", size= 1)+
+  geom_vline(aes(xintercept= 25), linetype= 5, color= "darkgreen", size= 1) +
+  geom_segment(aes(x=16, xend= max(AvgBmi)), y=0, yend=0) +
+  theme_light() +
+  labs(title = "Body Mass Index (BMI)", x= "BMI = Weight(kg) / Height(m)2", y= "Number of people") +
+  annotate('text', x= 17.8, y= 3.5, label="18.5 BMI", color= "darkgreen", size= 3, angle= 90) +
+  annotate('text', x= 24, y= 3.5, label="25.0 BMI", color= "darkgreen", size= 3, angle= 90)
+```
+
+* Only 3 out of 8 people, fill in the range with normal BMI.
+
+# _______________________________________________
+
+#### 5. Recommendation
+
+* 5.1 The population size of the data provided is too small to produce accurate results and there is a significant amount of missing data, particularly in the Weight Log information table.
+
+* 5.2 To improve the accuracy of the app, it is recommended to implement a pop-up notification or an audible reminder for users to log their sleep time. This will address the issue of missing data in Sleep day table. (Refer to 4.4A and 4.4B)
+
+* 5.3 the app should remind the user to take the recommended sleep hours and show them how many calories they will lose based on getting enough sleep, which may encourage them to prioritize their sleep.
+
+* 5.4 The correlation between the amount of steps and METs versus calories burned is significant, therefore, the company should incentivize users to engage in more physical activity by offering discounts or promo code to those who exceed their weekly goals.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
